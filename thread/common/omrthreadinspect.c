@@ -26,6 +26,9 @@
  * once for out-of-process uses (e.g. debug extensions).
  * The APIs in this file are only used for inspecting threads -- not for modifying them
  */
+#if defined(ALPINE)
+#define _POSIX_C_SOURCE 200809L
+#endif
 
 #if defined(LINUX)
 /* Allowing the use of pthread_attr_getstack in omrthread_get_stack_range */

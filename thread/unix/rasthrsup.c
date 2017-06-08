@@ -22,6 +22,10 @@
 /* this #include defines the buildspec flags */
 #include "omrthread.h"
 
+#if defined(ALPINE)
+#define __GLIBC_PREREQ(maj, min) 1
+#endif 
+
 #if defined(LINUX)
 #if __GLIBC_PREREQ(2,4)
 #include <sys/syscall.h>

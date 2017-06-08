@@ -28,9 +28,13 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined(OSX)
+#if defined(OSX) || defined(ALPINE)
 #define __THROW
 #endif /* defined(OSX) */
+
+#if defined(ALPINE)
+typedef sighandler_t __sighandler_t;
+#endif
 
 #if defined(LINUXPPC)
 typedef __sighandler_t sighandler_t;

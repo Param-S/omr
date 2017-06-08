@@ -26,7 +26,9 @@
 
 #if defined(LINUX)
 #include <sys/prctl.h>
+#if !defined(ALPINE)
 #include <linux/prctl.h>
+#endif
 #endif /* defined(LINUX) */
 
 #if (defined(LINUX) || defined(OSX)) && defined(J9X86)

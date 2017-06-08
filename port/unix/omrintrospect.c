@@ -27,6 +27,7 @@
 #define _GNU_SOURCE
 #endif /* defined(LINUX) */
 
+
 #include <pthread.h>
 #include <ucontext.h>
 #include <sched.h>
@@ -51,6 +52,10 @@
 #include <sys/thread.h>
 #elif defined(J9ZOS390)
 #include <stdlib.h>
+#endif
+
+#if defined(ALPINE)
+typedef union sigval sigval_t;
 #endif
 
 #include "omrintrospect.h"
@@ -1393,7 +1398,9 @@ setup_native_thread(J9ThreadWalkState *state, thread_context *sigContext, int he
 			memcpy(state->current_thread->context, ((J9UnixSignalInfo *)sigContext)->platformSignalInfo.context, size);
 		} else if (state->current_thread->thread_id == omrthread_get_ras_tid()) {
 			/* return context for current thread */
+			#if !defined(ALPINE)
 			getcontext((ucontext_t *)state->current_thread->context);
+			#endif
 		} else {
 			memcpy(state->current_thread->context, (void *)data->thread->context, size);
 		}

@@ -16,4 +16,4 @@
 ##    Multiple authors (IBM Corp.) - initial implementation and documentation
 ################################################################################
 
-HOST_DEFINES+=LINUX
+HOST_DEFINES+=LINUX ALPINE
