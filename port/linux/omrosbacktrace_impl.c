@@ -29,7 +29,14 @@
 #include "omrsignal_context.h"
 
 #include <dlfcn.h>
+#if defined(ALPINE)
+#include <unwind.h>
+int backtrace (void **__array, int __size) {
+	return 1;
+}
+#else
 #include <execinfo.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 

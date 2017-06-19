@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * (c) Copyright IBM Corp. 2000, 2016
+ * (c) Copyright IBM Corp. 2000, 2017
  *
  *  This program and the accompanying materials are made available
  *  under the terms of the Eclipse Public License v1.0 and
@@ -169,6 +169,75 @@ const char *TR_PPCCallStackIterator::getProcedureName()
    }
 
 #elif defined(LINUX)
+#if defined(ALPINE)
+#include <libunwind.h>
+#include <cxxabi.h> // for abi::__cxa_demangle
+void TR_LinuxCallStackIterator::printStackBacktrace(TR::Compilation *comp)
+   {
+   unw_cursor_t cursor;                                                                           
+   unw_context_t context;                                                                         
+                                                                                                  
+   unw_getcontext(&context);                                                                      
+   unw_init_local(&cursor, &context);                                                             
+   uint32_t frame = 0;                                                                            
+   int n=0;                                                                                       
+   while ( unw_step(&cursor) )                                                                    
+        {                                                                                         
+           char func[256];                                                                        
+   intptr_t offset;                                                                               
+   intptr_t address;                                                                              
+                                                                                                  
+     unw_word_t ip, sp, off;                                                                      
+                                                                                                  
+     unw_get_reg(&cursor, UNW_REG_IP, &ip);                                                       
+     unw_get_reg(&cursor, UNW_REG_SP, &sp);                                                       
+                                                                                                  
+     char symbol[256] = {"<unknown>"};                                                            
+     char *name = symbol;                                                                         
+                                                                                                  
+    if ( !unw_get_proc_name(&cursor, symbol, sizeof(symbol), &off) )                              
+    {                                                                                             
+      char *ms;                                                                                   
+      ms = strstr(name, ":");                                                                     
+      if (ms!= NULL)                                                                              
+           int r = sscanf(name, "%*[^::]::%255[^<>()]",func);                                     
+      else                                                                                        
+           int r = sscanf(name, "%255[^<>()]",func);                                              
+                                                                                                  
+      address = ip;                                                                               
+      offset = off;                                                                               
+                                                                                                  
+      char *funcToPrint = func;                                                                   
+      size_t length = 256;                                                                        
+      char *buffer = (char*) malloc(length);  
+      int32_t status = -1;                                                                        
+      char *demangled = abi::__cxa_demangle(func, buffer, &length, &status);                      
+      if (status == 0) funcToPrint = demangled;                                                   
+      if (comp)                                                                                   
+         traceMsg(comp, "#%d: function %s+%#x [%#p]\n",                                           
+              frame,                                                                              
+              funcToPrint,                                                                        
+              offset,                                                                             
+              address);                                                                           
+      else                                                                                        
+         fprintf(stderr, "#%d: function %s+%#x [%#p]\n",                                          
+                 frame,                                                                           
+                 funcToPrint,                                                                     
+                 offset,                                                                          
+                 address);                                                                        
+      if (demangled) free(demangled);                                                             
+      }                                                                                           
+   else                                                                                           
+      {                                                                                           
+      if (comp)                                                                                   
+         traceMsg(comp, "#%d %#p: \n", frame, address);                                           
+      else                                                                                        
+         fprintf(stderr, "#%d %#p: \n", frame, address);                                          
+      }                                                                                           
+        frame++;                                                                                  
+        }
+   }
+#else
 #include <execinfo.h>
 #include <cxxabi.h> // for abi::__cxa_demangle
 
@@ -226,13 +295,12 @@ void TR_LinuxCallStackIterator::printStackBacktrace(TR::Compilation *comp)
       }
    free(symbols);
    }
-
+#endif /* if defined(ALPINE) */
 #elif defined(J9ZOS390)
 
 #include <unistd.h>  // for __e2a_l
 #include <ceeedcct.h>
-
-extern "builtin" void *__gdsa();
+ extern "builtin" void *__gdsa();
 
 TR_MvsCallStackIterator::TR_MvsCallStackIterator ()
       : TR_CallStackIterator()

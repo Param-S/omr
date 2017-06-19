@@ -59,6 +59,9 @@
 #include <nl_types.h>
 #include <langinfo.h>
 #ifndef USER_HZ
+#if !defined(HZ) && defined(ALPINE)
+#define HZ 100
+#endif
 #define USER_HZ HZ
 #endif
 
